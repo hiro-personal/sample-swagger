@@ -1,0 +1,448 @@
+openapi: 3.0.0
+info:
+  title: ai_chat_message_history
+  version: v1
+  description: ai_chat_message_history
+tags: []
+paths:
+  /api/p/chat:
+    post:
+      operationId: createChat
+      description: 通常の会話および口座同期エラーに対応するAPI。Server-Sent Eventsによるストリーミングレスポンスを返します。
+      parameters: []
+      responses:
+        '200':
+          description: 成功した場合のストリーミングレスポンス
+          content:
+            text/event-stream:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      messages:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            role:
+                              type: string
+                            content:
+                              type: string
+                          required:
+                            - role
+                            - content
+                      doc_id:
+                        type: array
+                        items:
+                          type: string
+                    required:
+                      - messages
+                      - doc_id
+                required:
+                  - data
+        '400':
+          description: 無効なリクエスト
+        '500':
+          description: サーバーエラー
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conversation_id:
+                  type: integer
+                  format: int64
+                product_name:
+                  type: string
+                lane_name:
+                  type: string
+                sender:
+                  type: integer
+                  format: int32
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      content:
+                        type: string
+                      role:
+                        type: string
+                    required:
+                      - content
+                      - role
+                company_data:
+                  type: object
+                  properties:
+                    accounting_period:
+                      type: object
+                      properties:
+                        start_date:
+                          type: string
+                          format: date
+                        end_date:
+                          type: string
+                          format: date
+                      required:
+                        - start_date
+                        - end_date
+                    company_plan:
+                      type: string
+                    fiscal_year_limit_setting:
+                      type: boolean
+                    role:
+                      type: string
+                    starting_balance_setting:
+                      type: boolean
+                    tax_method:
+                      type: number
+                    walletables:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          bank_name:
+                            type: string
+                          sync_error_code:
+                            type: number
+                  required:
+                    - accounting_period
+                    - company_plan
+                    - role
+              required:
+                - product_name
+                - lane_name
+                - messages
+                - company_data
+  /api/p/chat/logs:
+    get:
+      operationId: getChatLogs
+      description: |-
+        最新の会話ログを取得するAPI
+        指定された `company_id` と `user_id` に関連付けられた会話履歴を取得します。
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationHistoryResponse'
+        '400':
+          description: 無効なリクエスト
+        '500':
+          description: サーバーエラー
+  /api/p/chat/query_suggest:
+    post:
+      operationId: querySuggest
+      description: クエリ提案を行うAPI
+      parameters: []
+      responses:
+        '200':
+          description: クエリ提案の正常な戻り値
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  suggestions:
+                    type: array
+                    items:
+                      type: string
+                    description: 提案一覧
+                  doc_ids:
+                    type: array
+                    items:
+                      type: string
+                    description: 参考ドキュメント一覧
+                required:
+                  - suggestions
+                  - doc_ids
+        '400':
+          description: 無効なリクエスト
+        '500':
+          description: サーバーエラー
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      content:
+                        type: string
+                      role:
+                        type: string
+                    required:
+                      - content
+                      - role
+                company_data:
+                  type: object
+                  properties:
+                    accounting_period:
+                      type: object
+                      properties:
+                        start_date:
+                          type: string
+                          format: date
+                        end_date:
+                          type: string
+                          format: date
+                      required:
+                        - start_date
+                        - end_date
+                    company_plan:
+                      type: string
+                    fiscal_year_limit_setting:
+                      type: boolean
+                    role:
+                      type: string
+                    starting_balance_setting:
+                      type: boolean
+                    tax_method:
+                      type: number
+                    walletables:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          bank_name:
+                            type: string
+                          sync_error_code:
+                            type: number
+                  required:
+                    - accounting_period
+                    - company_plan
+                    - role
+                product_name:
+                  type: string
+                conversation_id:
+                  type: string
+                lane_name:
+                  type: string
+                url:
+                  type: string
+                doc_ids:
+                  type: array
+                  items:
+                    type: string
+                n:
+                  type: integer
+                  format: int32
+              required:
+                - messages
+                - company_data
+                - product_name
+                - conversation_id
+                - lane_name
+                - url
+                - doc_ids
+  /api/p/conversation:
+    put:
+      operationId: updateConversation
+      description: 会話更新API
+      parameters: []
+      responses:
+        '200':
+          description: メッセージ保存APIの成功レスポンス
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: 無効なリクエスト
+        '500':
+          description: サーバーエラー
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conversation_id:
+                  type: integer
+                  format: int64
+                resolved:
+                  type: integer
+                  format: int32
+              required:
+                - conversation_id
+  /api/p/message:
+    post:
+      operationId: createMessage
+      description: |-
+        メッセージ保存API
+        指定された会話に新たなメッセージを作成する
+      parameters: []
+      responses:
+        '200':
+          description: メッセージ保存APIの成功レスポンス
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: 無効なリクエスト
+        '500':
+          description: サーバーエラー
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conversation_id:
+                  type: integer
+                  format: int64
+                sender:
+                  type: integer
+                  format: int32
+                content:
+                  type: string
+              required:
+                - conversation_id
+                - content
+  /api/p/summary:
+    post:
+      operationId: summary
+      description: 回答要約を行うAPI
+      parameters: []
+      responses:
+        '200':
+          description: 成功したサマリのレスポンス
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/summary200ApplicationJsonResponse'
+        '400':
+          description: 無効なリクエスト
+        '500':
+          description: サーバーエラー
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      content:
+                        type: string
+                      role:
+                        type: string
+                    required:
+                      - content
+                      - role
+                conversation_id:
+                  type: string
+              required:
+                - messages
+components:
+  schemas:
+    ConversationHistoryResponse:
+      type: object
+      required:
+        - id
+        - user_id
+        - company_id
+        - question_type
+        - resolved
+        - is_connected_support_chat
+        - created_at
+        - updated_at
+        - message_logs
+      properties:
+        id:
+          type: integer
+          format: int32
+        user_id:
+          type: integer
+          format: int32
+        company_id:
+          type: integer
+          format: int32
+        question_type:
+          type: string
+        resolved:
+          type: string
+        is_connected_support_chat:
+          type: boolean
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        message_logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageLog'
+      description: 最新の会話ログのレスポンス
+    MessageLog:
+      type: object
+      required:
+        - id
+        - sender
+        - content
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: integer
+          format: int32
+        sender:
+          type: string
+        content:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+      description: 会話ログのメッセージモデル
+    apiChat200ApplicationJsonResponse:
+      type: object
+      required:
+        - body
+      properties:
+        body:
+          type: object
+          properties:
+            data:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                      content:
+                        type: string
+      description: 成功した場合のレスポンス
+    summary200ApplicationJsonResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+              content:
+                type: string
+      description: 成功したサマリのレスポンス
